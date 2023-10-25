@@ -1,0 +1,117 @@
+Inicialmente, ao inserir alguns valores no banco de dados que eu havia criado pra seguradora, me deparei com o seguinte:
+- Recebi o erro: "Perhaps you need a different "datestyle" setting."
+Notei que o formato da data, que tem que estar em MM-DD-YYYY, então tenho que encontrar uma forma de repassar isso para o cliente ou adaptar para minha regra de negócio.
+- O número de telefone também apresentou problema, por ser um número grande, apresentou o erro "integer out of range", aparentemente por ser um inteiro maior que +2147483647. 
+Resolvi isso removendo o DDD. Porém, a melhor forma seria a mudança do tipo para bigint. 
+
+QUESTÃO 1 - Comandos 1
+Na primeira linha que não deveria ter a execução autorizada, recebi o erro "value too long for type character(11)", 
+visto que ao criar a tabela, defini esse atributo como um CPF com 11 caracteres. 
+Na segunha linha, reebi o erro "value too long for type character(1)", visto que a linha de prioridade 
+só deve ter um caractere e foi tentado inserir mais de um.
+
+QUESTÃO 2 - 
+Possivelmente haveria um erro com o Comando 2 CASO eu houvesse definido o numero de identificação como INTEGER e não BIGINT. 
+Como já havia tido esse erro nas tentativas de inserção das tabelas de segurado com o número de telefone, 
+ao criar a tabela tarefas, já me atentei a essa propriedade.
+
+QUESTÃO 4 -
+Recebi o erro "column "id" of relation "tarefas" contains null values", 
+visto que no inicio do roteiro foi inserido uma linha de null. 
+Usei o comando DELETE FROM tarefas WHERE id is null; para remover essa linha específica
+
+QUESTÃO 6 - 
+6.A) não foi necessário inserir uma constraint visto que eu já havia definido essa coluna como CHAR(11).
+
+QUESTÃO 8 - Comandos 6
+ERROR:  new row for relation "funcionario" violates check constraint "funcionario_chk_funcao"
+DETAIL:  Failing row contains (12345678911, 1980-05-07, Pedro da Silva, SUP_LIMPEZA, S, null).
+
+O problema aparentemente foi a definição da restrição "funcionario_chk_funcao", onde eu havia definido (funcao = 'LIMPEZA' AND superior_cpf IS NOT NULL). 
+Modifiquei para:
+ALTER TABLE funcionario ADD CONSTRAINT 
+Porém quando fui inserir a segunda linha dos Comandos 6, deu erro por conta da restriçao. 
+Decidi que teria duas restrições, a primeira e essa:
+ALTER TABLE funcionario ADD CONSTRAINT funcionario_chk_funcao_notsup CHECK (funcao = 'LIMPEZA' AND superior_cpf IS NOT NULL);
+Porém, também não funcinou, porque eu não havia removido a constraint anterior (funcionario_chk_funcao).
+
+Testei depois de remove-la, e nenhuma das duas linhas entrava visto que uma violava funcionario_chk_funcao_sup e a outra violava funcionario_chk_funcao_notsup.
+Acabei removendo a constraint 'funcionario_chk_funcao_sup' pra ver se funcionaria.
+Consigo inserir a pessoa com função LIMPEZA, mas o SUP_LIMPEZA viola a restrição. 
+Pedi ajuda ao monitor e vi uma nova forma de inserir a restrição dupla. O que levou ao sucesso dos comandos como definido no roteiro.
+
+QUESTÃO 9
+Inserções que nao funcionam:
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678917', '1990-07-08', 'Joao Silva', 'Limpeza', 'P', '12345678911');
+ERROR:  duplicate key value violates unique constraint "funcionario_pkey"
+DETAIL:  Key (cpf)=(12345678917) already exists.
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678931', '1990-07-08', 'Josue da Silva', 'Limpeza', 'P', null);
+ERROR:  new row for relation "funcionario" violates check constraint "check_supervisor"
+DETAIL:  Failing row contains (12345678931, 1990-07-08, Josue da Silva, Limpeza, P, null).
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678934', '1995-07-08', 'Maria da Silva', 'Limpeza', 'P', null);
+ERROR:  new row for relation "funcionario" violates check constraint "check_supervisor"
+DETAIL:  Failing row contains (12345678934, 1995-07-08, Maria da Silva, Limpeza, P, null).
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678911', '1995-07-08', 'Maria da Silva', 'Limpeza', 'P', '12345678911') ;
+ERROR:  duplicate key value violates unique constraint "funcionario_pkey"
+DETAIL:  Key (cpf)=(12345678911) already exists.
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678935', '1995-07-08', 'Horacio Leite', 'Limpeza', 'P', null);
+ERROR:  new row for relation "funcionario" violates check constraint "check_supervisor"
+DETAIL:  Failing row contains (12345678935, 1995-07-08, Horacio Leite, Limpeza, P, null).
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678929', '1995-07-08', 'Horacio Leite', 'Limpeza', 'P', '12345678911');
+ERROR:  duplicate key value violates unique constraint "funcionario_pkey"
+DETAIL:  Key (cpf)=(12345678929) already exists.
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678937', '1995-07-08', 'Horacio Leite', 'Limpeza', 'A', '12345678911');
+ERROR:  duplicate key value violates unique constraint "funcionario_pkey"
+DETAIL:  Key (cpf)=(12345678929) already exists.
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678990', '1993-06-07', 'Liz Maria', 'Limpeza', 'B', '12345678911');
+ERROR:  new row for relation "funcionario" violates check constraint "funcionario_nivel_check"
+DETAIL:  Failing row contains (12345678990, 1993-06-07, Liz Maria, Limpeza, B, 12345678911).
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678965', '1990-07-08', 'Josue da Silva', 'Limpeza', 'T', null);
+ERROR:  new row for relation "funcionario" violates check constraint "check_supervisor"
+DETAIL:  Failing row contains (12345678965, 1990-07-08, Josue da Silva, Limpeza, T, null).
+
+
+INSERT INTO funcionario(cpf, data_nasc, nome, funcao, nivel, superior_cpf) VALUES ('12345678945', '1990-07-08', 'Josue da Silva', 'Limpeza_sup', 'S', 12345678911);
+ERROR:  new row for relation "funcionario" violates check constraint "check_supervisor"
+DETAIL:  Failing row contains (12345678965, 1990-07-08, Josue da Silva, Limpeza, T, null).
+
+QUESTÃO 10 -
+Tentei inserir a CONSTRAINT da FKEY, usando a OPÇÃO 1.
+ALTER TABLE tarefas ADD CONSTRAINT tarefas_func_resp_cpf_fkey FOREIGN KEY (func_resp_cpf) REFERENCES  funcionario (cpf)
+ON DELETE CASCADE;
+
+Porém recebi esse erro:
+
+ERROR:  insert or update on table "tarefas" violates foreign key constraint "tarefas_func_resp_cpf_fkey"
+DETAIL:  Key (func_resp_cpf)=(32323232955) is not present in table "funcionario".
+
+ERROR:  insert or update on table "tarefas" violates foreign key constraint "tarefas_func_resp_cpf_fkey"
+DETAIL:  Key (func_resp_cpf)=(32323232911) is not present in table "funcionario".
+
+ERROR:  insert or update on table "tarefas" violates foreign key constraint "tarefas_func_resp_cpf_fkey"
+DETAIL:  Key (func_resp_cpf)=(98765432111) is not present in table "funcionario".
+
+ERROR:  insert or update on table "tarefas" violates foreign key constraint "tarefas_func_resp_cpf_fkey"
+DETAIL:  Key (func_resp_cpf)=(98765432122) is not present in table "funcionario".
+
+Tentei alterar algumas vezes e ia recebendo o erros acima de algum CPF que ainda não estava em funcionario e já estava em tarefas.
+Então fui inserindo as tuplas em funcionario.
+
+QUESTÃO 11
+Criei a CONSTRAINT, porém tive erro por algumas linhas da relação tarefas violarem ela. 
+Acabei utilizando "UPDATE tarefas SET func_resp_cpf = null WHERE status = 'P';" para remover os CPFs das tarefas
+tem o status 'P'. 
+E depois adicionei a CONSTRAINT.
+
+Na parte de alterar a CONSTRAINT da QUESTÃO 10, tiver que fazer o DROP da CONSTRAINT, recriá-la, 
+e ao tentar remover o funcionario que tem tarefas no status C & E, o erro foiERROR:  new row for relation "tarefas" violates check constraint "tarefas_chk_cpf"
+DETAIL:  Failing row contains (2147483646, limpar chão do corredor central, null, 0, C).
+CONTEXT:  SQL statement "UPDATE ONLY "public"."tarefas" SET "func_resp_cpf" = NULL WHERE $1 OPERATOR(pg_catalog.=) "func_resp_cpf""
