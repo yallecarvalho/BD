@@ -1,0 +1,17 @@
+1. SELECT * FROM department;
+2. SELECT * FROM dependent;
+3. SELECT * FROM dept_locations;
+4. SELECT * FROM employee;
+5. SELECT * FROM project;
+6. SELECT * FROM works_on;
+7. SELECT fname, lname FROM employee WHERE e.sex = 'M';
+8. SELECT fname FROM employee WHERE sex = 'M' and superssn is NULL;
+9. SELECT e.fname, s.fname FROM employee AS e, employee AS s WHERE e.superssn = s.ssn;
+10. SELECT e.fname FROM employee AS e, employee AS s WHERE s.fname = 'Franklin' and e.superssn = s.ssn;
+11. SELECT d.dname, dp.dlocation FROM department AS d, dept_locations AS dp WHERE d.dnumber = dp.dnumber;
+12. SELECT d.dname FROM department AS d, dept_locations AS dp WHERE d.dnumber = dp.dnumber and dp.dlocation LIKE 'S%';
+13. SELECT e.fname, e.lname, d.dependent_name FROM employee AS e, dependent AS d WHERE e.ssn = d.essn;
+14. SELECT e.fname || ' ' ||  minit || ' ' || lname AS full_name, e.salary FROM employee AS e WHERE salary > 50000;
+15. SELECT p.pname, d.dname FROM project AS p, department AS d WHERE p.dnum = d.dnumber;
+16. SELECT p.pname, e.fname FROM project AS p, employee AS e, department AS d WHERE p.pnumber > 30 and p.dnum = d.dnumber and e.ssn = d.mgrssn;
+17. SELECT p.pname, e.fname FROM project AS p, employee AS e, works_on AS w WHERE w.essn = e.ssn and w.pno = p.pnumber; 
